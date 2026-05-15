@@ -129,4 +129,36 @@ What do you want to see reversed?
 Damn it's hard to believe this worked on the first try. I thought that the whole logic behind the way I'm creating threads won't work out as it should but it did. And since we're storing the client details in a list we can also theoretically use them to interact with a particular client. We just need to make it more readable, so the client could send over a name that we can assign to their address and store that in a dictionary.  
 Another thing I want to look into is finding out a way to know who is connected to our server, beyond what we have already. Mainly I'm going to look for some inbuilt functions that might workout that way, and if they don't make my own that do.  
 
-Now both the client instances were run on my laptop, so let me try running them on different devices that are on the same network.
+Now both the client instances were run on my laptop, so let me try running them on different devices that are on the same network. I ran one client on my phone and one client on my laptop and that worked as well, so connection wise it all works.  
+
+## MEGA CLIENT
+Now the next thing I want to try is interacting with a client of my choosing. So if I have 5 clients connected to my server, I need to be able to choose a client and send them some instructions.  
+
+However after some thinking on how I want this work, I think I want to let the server just manage connections and messages. I want to avoid adding any hard coded logic on the server. So what if I create a mega client. Or some sort of admin client. This admin client should be able to see who is connected to the server, choose one dude and control it.  
+
+And on top of that even though I wanted to avoid it we need to prepare the server for two different types of clients so we will need to hard code some logic for that.  
+
+Let's start by preparing the server for a mega client. I also will now expect a name from each client and store their details in a dictionary instead of a list. This should make things a little easier to work with.  
+
+Another thing to worry about is the buffer size. In the [HOWTO](https://docs.python.org/3/howto/sockets.html) they mention this problem here:
+~~~
+Now we come to the major stumbling block of sockets - send and recv operate on the network buffers. They do not necessarily handle all the bytes you hand them (or expect from them), because their major focus is handling the network buffers. In general, they return when the associated network buffers have been filled (send) or emptied (recv). They then tell you how many bytes they handled. It is your responsibility to call them again until your message has been completely dealt with.
+~~~
+
+Now since I am not actually sending messages 'per se' between the client and the server and I have full control over the communication between sockets, I don't think this is something I need to worry about right now, but maybe I should deal with an abstraction for now. Just make a custom function that will just forward send and recv functions. Later on when I want to change the internals of the abstract function we should not face any problems.
+
+So we need to:
+- Take a name from every client.
+- Change the lists to dictionaries.
+- Prepare the server to accept a mega client first before.
+
+Before we start with preparing the server, I want to plan out what the mega client should actually do.
+- When it connects to the server it should be given a list of connected clients.
+- We'll also give the client the option to refresh the list.
+- It should then choose a client, and then for our test case, we'll just send a message to the selected client.
+
+So first the server needs to know that the client connected to it is the mega client, for that I'll make it check the name of the client (security wise this is horrible but this is just me trying stuff out and I do not want to make this any more complicated than it has to be).
+
+Along with the above mentioned changes, I also refactored the code. I added a new class called `CustomSocket`, which contains our custom send and recv functions (for now they just call the regular send and recv function and return their values).
+
+I then moved our main logic, the server creation and the connection loop into a class method as well. So now we have two classes to manage clients `ClientMaker` and `ClientController`. `ClientMaker` is used to create different clients as objects and `ClientController` is where I can manage the connection loops and functions that the clients will have.
