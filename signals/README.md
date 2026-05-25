@@ -159,6 +159,47 @@ Before we start with preparing the server, I want to plan out what the mega clie
 
 So first the server needs to know that the client connected to it is the mega client, for that I'll make it check the name of the client (security wise this is horrible but this is just me trying stuff out and I do not want to make this any more complicated than it has to be).
 
-Along with the above mentioned changes, I also refactored the code. I added a new class called `CustomSocket`, which contains our custom send and recv functions (for now they just call the regular send and recv function and return their values).
+~~~
+Okay full refactor of the old code
+Flow:
+1. Create Server
+2. Accept Connections
+3. Check clients
+4. Store non admin client sessions
+5. Assign Thread
+6. Store non admin client threads
+7. Split Flow into normal and admin clients now
 
-I then moved our main logic, the server creation and the connection loop into a class method as well. So now we have two classes to manage clients `ClientMaker` and `ClientController`. `ClientMaker` is used to create different clients as objects and `ClientController` is where I can manage the connection loops and functions that the clients will have.
+Flow - admin:
+1. Give it a list of connected clients
+2. Accept the client details (could be the name)
+3. Send that client a message
+4. For later:
+    a. Possibility to get the list whenever I want it.
+    b. Get choose another client and do the same.
+
+Flow - client:
+1. Connect to the server and wait for the admin to send a message
+~~~
+
+
+While writing this since I wanted to send the dictionary containing the client list to the mega client, I had to figure out a way to send a dictionary over sockets.  
+Just using `socket.send(dict)` does not work so I searched up ways to send a dictionary over sockets. One of the more recommended methods was to use the `json` library and serialise the dictionary into a string using `json.dumps`, I can then use `encode` to convert it into bytes.
+
+However I faced another issue with attempting to serialise the dictionary. The dictionary would store the client object as values. And the `json.dumps` function does not like that. So instead I'll be passing just the names of the connected clients, instead of the client object as well. Because we do not need the object.  
+Later on we can also use the client's address. But since I'm running everything locally every client has the same IP address.
+
+As I kept working on this, I kept making changes to the code. Trying to make it more abstract, mainly because as I was writing things it got really complicated and I was starting to get confused about what I had written. (This is a problem I definitely need to work on). I ended up consulting with a friend who told me what changes to make to prevent such confusion. And ended up splitting my code into a bunch of files and classes. I don't want to paste all the codes in this blog but I will add a `github` link at the end for the files of the referenced programs.  
+~~~
+Slightly off topic, but while testing my server code, if I made a change and restarted it, I would get an OSError:
+"OSError: [Errno 98] Address already in use"
+This would last for a minute or two and I tried to figure out why.
+Apparently the kernel holds the port open for a while after the connection closes. This is called the "TIME_WAIT" state.
+The docs for sockets mention using this line to stop that:
+"s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)"
+I will try to figure out what the attributes mean some other time.
+~~~
+
+# Potential Issues
+If someone logs in with a name that already exists in the dictionary, the previous session could be wiped.
+Inactivity time out.

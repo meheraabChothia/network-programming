@@ -1,0 +1,3 @@
+- [ ] List of clients has a 0 index.
+- [ ] Admin can choose a client and send a message to that client but the other client does not receive it.
+  - [ ] Now I can prepare the clients from doing nothing but waiting for the admin clients message.
