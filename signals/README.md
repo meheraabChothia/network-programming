@@ -190,6 +190,39 @@ However I faced another issue with attempting to serialise the dictionary. The d
 Later on we can also use the client's address. But since I'm running everything locally every client has the same IP address.
 
 As I kept working on this, I kept making changes to the code. Trying to make it more abstract, mainly because as I was writing things it got really complicated and I was starting to get confused about what I had written. (This is a problem I definitely need to work on). I ended up consulting with a friend who told me what changes to make to prevent such confusion. And ended up splitting my code into a bunch of files and classes. I don't want to paste all the codes in this blog but I will add a `github` link at the end for the files of the referenced programs.  
+
+### So let's talk about the flow of our new program
+1. Server Code:
+- Start the [server](https://github.com/meheraabChothia/network-programming/blob/main/signals/mega-client/refactored_server.py) and bind it to an address.
+- Loop over looking for connections
+  - When a client connects classify them as an admin client or a normal client.
+- Assign the client to a thread and let it run in the background.
+- Both the client and the thread are added to dictionaries.
+
+- The normal client, will just wait to receive a message from the admin.
+- The admin client's object on the server's end, waits for a command from the admin client.
+  - It then checks if the command matches the ones in our utilities file [`util.py`](https://github.com/meheraabChothia/network-programming/blob/main/signals/mega-client/utils.py)
+  - For the `list` command the server will send the list of connected clients to the admin.
+  - For the `choose` command the server takes the name of the client from the admin and checks to see if it exists.
+  - If it does, it returns a connection successful message along with a custom exception that we check on the clients end. All of these exceptions can be found in [`exceptions.py`](https://github.com/meheraabChothia/network-programming/blob/main/signals/mega-client/exceptions.py)
+    - It then sends a sample message to the chosen client.
+  - If the client is not found the relevant exception is sent to the client and checked.
+
+Apart from the stuff that exists in `utils.py` and `exceptions.py` everything exists in one of two classes: `Server` and `Client`. The Server class, handles creating the server socket, the connection loop, sorting the clients and assigning their threads for them.  
+The Client class handles the acceptance of the client socket, retrieving the client list both encoded and decoded, helping the mega client from selecting a client from the client list, and the interaction loop between the server and the admin client. It will also contain any functions that the server will require to control or communicate with the clients.
+
+2. Client Code:
+- The [client code](https://github.com/meheraabChothia/network-programming/blob/main/signals/mega-client/client.py) has just one class called `Client`. This class deals with making the client socket and connecting it to the host, taking the name from the user and sending it to the server.
+
+It then has the flow loops for the admin client and the normal client. The normal client only waits for a message from the admin and prints it to the terminal.
+The admin client flow meanwhile, let's the user input a command, checks the command and calls the necessary functions.  
+
+
+
+
+
+
+
 ~~~
 Slightly off topic, but while testing my server code, if I made a change and restarted it, I would get an OSError:
 "OSError: [Errno 98] Address already in use"

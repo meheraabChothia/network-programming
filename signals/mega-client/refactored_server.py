@@ -41,9 +41,17 @@ class Client:
             self.connected_client = self.server.clients_dict[name]
             self.cust_socket.cust_send(
                 exceptions.ClientConnected.__name__.encode())
-            self.connected_client.cust_socket.cust_send(
-                b"Message from the Mega Client")
-            self.cust_socket.cust_send(b"Sent the message to the client.")
+            # Need to replace the line below to change what the admin does
+            self.do_something()
+
+    def do_something(self):
+        if self.connected_client.cust_socket.cust_send(
+                b"Message from the Mega Client"):
+            self.cust_socket.cust_send(
+                exceptions.CommucationSuccess.__name__.encode())
+        else:
+            self.cust_socket.cust_send(
+                exceptions.CommucationFailure.__name__.encode())
 
     def admin_control_loop(self):
         """
@@ -59,8 +67,10 @@ class Client:
             choice = self.cust_socket.cust_recv().decode()
             if choice == COMMANDS['list']:
                 self.cust_socket.cust_send(self.get_client_list_encoded())
-            if choice == COMMANDS['choose']:
+            elif choice == COMMANDS['choose']:
                 self.select_client()
+            else:
+                print(f"The dude sent some weird command: {choice}")
 
     def reverse(self):
         while (True):
@@ -97,9 +107,16 @@ class Server:
             print("Pushed the client to another thread.")
 
     def client_sorter(self, client: Client) -> threading.Thread:
+        """
+        Sorts the clients based on their names and returns the relevant thread.
+        For now normal clients do not need a new thread so keeping the old code there.
+
+        """
         if client.name == 'admin':
             return self.get_admin_thread(client)
         else:
+            # Now that we're letting the clients just wait for the admin to talk to them,
+            # we no longer need to run them on a thread. Not for now atleast.
             return threading.Thread(target=client.reverse)
 
     def get_admin_thread(self, client: Client) -> threading.Thread:
