@@ -212,20 +212,57 @@ Apart from the stuff that exists in `utils.py` and `exceptions.py` everything ex
 The Client class handles the acceptance of the client socket, retrieving the client list both encoded and decoded, helping the mega client from selecting a client from the client list, and the interaction loop between the server and the admin client. It will also contain any functions that the server will require to control or communicate with the clients.
 
 2. Client Code:
-- The [client code](https://github.com/meheraabChothia/network-programming/blob/main/signals/mega-client/client.py) has just one class called `Client`. This class deals with making the client socket and connecting it to the host, taking the name from the user and sending it to the server.
+The [client code](https://github.com/meheraabChothia/network-programming/blob/main/signals/mega-client/client.py) has just one class called `Client`. This class deals with making the client socket and connecting it to the host, taking the name from the user and sending it to the server.  
 
 It then has the flow loops for the admin client and the normal client. The normal client only waits for a message from the admin and prints it to the terminal.
 The admin client flow meanwhile, let's the user input a command, checks the command and calls the necessary functions.  
 
+The flow looks something like this:
+- The user is asked to enter their name, then depending on that input the appropriate functions are called (admin_loop for admins and client_loop for normal clients).
+- The normal client just runs a `recv` call and prints out what it gets.  
+- The admin client will ask the user to enter commands.
+- It will then take those commands process them and send them to the server.
+- What the server does with that choice is mentioned in the server flow above.
+- The server then returns a few status codes, for connecting to the client and to tell the admin if the communication was a success (I would like to explore this in more detail).
+- The client then goes through the status codes and handles them (I should also look into how HTTP communication works with status codes).
 
+That's basically it. The premise is pretty simple and it works. The normal client connects to the server and waits for the mega client to send it a message.
+The mega client on the other hand can choose to see all connected clients at any moment and then choose one to 'activate'. In this case activation is sending it a message.
 
+Here is a sample run of the code:
+~~~
+$ python refactored_server.py
+Interacting with client ('127.0.0.1', 34884)
+Pushed the client to another thread.
+Pushed the client to another thread.
+Interacting with the admin client.
+Interacting with the admin client.
+Interacting with the admin client.
 
+$ python client.py
+What's your name: admin
+Successfully connected to the server.
+Connected to the Server as an admin!
+(/help for help) command: /list
+1. dummy
+2. admin
+(/help for help) command: /connect
+Name of the client: dummy
+Connected to the client with the name: dummy
+Communcation with the client was successful.
+(/help for help) command:
 
-
+$ python client.py
+What's your name: dummy
+Successfully connected to the server.
+Waiting for communication from the admin:
+Message from admin: Message from the Mega Client
+Waiting for communication from the admin:
+~~~
 
 ~~~
 Slightly off topic, but while testing my server code, if I made a change and restarted it, I would get an OSError:
-"OSError: [Errno 98] Address already in use"
+"OSError: [Errno 9] Address already in use"
 This would last for a minute or two and I tried to figure out why.
 Apparently the kernel holds the port open for a while after the connection closes. This is called the "TIME_WAIT" state.
 The docs for sockets mention using this line to stop that:

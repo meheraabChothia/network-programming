@@ -22,3 +22,12 @@ class CommucationSuccess(CommucationExceptions):
 
 class CommucationFailure(CommucationExceptions):
     pass
+
+
+# Making a global exception for Server Connection statuses
+class ServerExceptions(Exception):
+    pass
+
+
+class ServerConnected(ServerExceptions):
+    pass

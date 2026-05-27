@@ -11,12 +11,19 @@ PORT = 8000
 
 class Client:
     def __init__(self):
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client.connect((HOST, PORT))
-        self.cust_socket = CustomSocket(self.client)
-        print(self.cust_socket.cust_recv())
-        self.name = input("What's your name: ")
-        self.cust_socket.cust_send(self.name.encode())
+        try:
+            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client.connect((HOST, PORT))
+            self.cust_socket = CustomSocket(self.client)
+            server_status = self.cust_socket.cust_recv().decode()
+            server_status = getattr(exceptions, server_status)
+            self.name = input("What's your name: ")
+            self.cust_socket.cust_send(self.name.encode())
+            raise server_status
+        except exceptions.ServerConnected:
+            print("Successfully connected to the server.")
+        except ConnectionRefusedError:
+            print("Could not connect to the server, check the IP and the port.")
 
     def display_client_list(self):
         """
@@ -41,29 +48,32 @@ class Client:
         Function to choose a client from the ones in the list
         """
         # Taking the name of the client from the user.
-        name = input("name of the client: ")
+        name = input("Name of the client: ")
 
-        # Send the name to the server
-        self.cust_socket.cust_send(name.encode())
+        try:
+            # Send the name to the server
+            self.cust_socket.cust_send(name.encode())
 
-        # Accept the status to see if the client was found
-        status = self.cust_socket.cust_recv().decode()
-
+            # Accept the status to see if the client was found
+            status = self.cust_socket.cust_recv().decode()
+            status = getattr(exceptions, status)
+            raise status
         # Handle the status
-        if (getattr(exceptions, status) == exceptions.ClientConnected):
-            print(f"Connected to client with the name: {name}")
-        elif (getattr(exceptions, status) == exceptions.ClientDoesNotExist):
-            print("Could not find that client.")
+        except exceptions.ClientDoesNotExist:
+            print("Could not find a client with that name.")
             return
+        except exceptions.ClientConnected:
+            print(f"Connected to the client with the name: {name}")
 
-        # Take the status of the communication from the server
-        communication_status = self.cust_socket.cust_recv().decode()
-
-        # Handle the communication status
-        if (getattr(exceptions, communication_status) == exceptions.CommucationSuccess):
-            print("Communcation with the client was successful.")
-        elif (getattr(exceptions, communication_status) == exceptions.CommucationFailure):
+        try:
+            # Take the status of the communication from the server
+            communication_status = self.cust_socket.cust_recv().decode()
+            communication_status = getattr(exceptions, communication_status)
+            raise communication_status
+        except exceptions.CommucationFailure:
             print("Communication Failed.")
+        except exceptions.CommucationSuccess:
+            print("Communcation with the client was successful.")
 
     def command_manager(self, choice):
         """

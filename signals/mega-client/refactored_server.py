@@ -17,9 +17,10 @@ class Client:
     def __init__(self, server: 'Server'):
         self.server = server
         (self.client, self.addr) = self.server.server.accept()
-        self.client.send(b"Connected to the server.")
-        self.name = self.client.recv(999_999).decode()
         self.cust_socket = CustomSocket(self.client)
+        self.cust_socket.cust_send(
+            exceptions.ServerConnected.__name__.encode())
+        self.name = self.client.recv(999_999).decode()
 
     def get_client_list(self):
         return list(self.server.clients_dict.keys())
@@ -64,6 +65,7 @@ class Client:
         """
         self.cust_socket.cust_send(b"Connected to the Server as an admin!")
         while (True):
+            print("Interacting with the admin client.")
             choice = self.cust_socket.cust_recv().decode()
             if choice == COMMANDS['list']:
                 self.cust_socket.cust_send(self.get_client_list_encoded())
