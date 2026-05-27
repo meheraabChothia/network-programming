@@ -270,6 +270,15 @@ The docs for sockets mention using this line to stop that:
 I will try to figure out what the attributes mean some other time.
 ~~~
 
-# Potential Issues
-If someone logs in with a name that already exists in the dictionary, the previous session could be wiped.
-Inactivity time out.
+## Issues that I am sure I will face
+While working on this I have thought of a few potential issues that I will face, I'll list them out for now but work on them some other time.
+- If someone logs in with a name that already exists in the dictionary, the previous session will be wiped.
+- No inactivity time out, if the server is expected to stay alive for a long time, any client sessions that were added will not be removed. This is something that needs to be fixed for the sake of performance.
+
+## The final hurdle
+Now that we have all of this setup, the only thing we need to do is make it so that instead of sending a message to the chosen client we make it play some sounds.  
+Now for that we will need an audio file, some way to open up that audio file in python and make the device play it. I need to first look into this. Maybe there exists a library in python that plays an audio file on the device running the code. I thought this would be quite straightforward but I have been running into quite a few interesting issues. I shall discuss them in the next blog.
+
+
+
+
